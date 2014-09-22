@@ -153,6 +153,7 @@ type StatByName struct {
 	RecentReqs   []int
 	RequestStats *RequestStats
 	Duration     time.Duration
+	Timing       TimingPercentile
 }
 
 type reverse struct{ sort.Interface }
@@ -166,4 +167,13 @@ type SKey struct {
 type cVal struct {
 	count int
 	cost  int64
+}
+
+type TimingPercentile struct {
+	P50 time.Duration
+	P85 time.Duration
+	P88 time.Duration
+	P92 time.Duration
+	P95 time.Duration
+	P98 time.Duration
 }

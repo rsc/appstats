@@ -29,6 +29,8 @@ const htmlBase = `
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <style>
     @import "static/appstats_css.css";
+    #ae-rpc-timing-col{width: 100px}
+    #ae-path-timing-col{width: 100px}
   </style>
   <title>Appstats - {{.Env.APPLICATION_ID}}</title>
 {{ end }}
@@ -99,12 +101,15 @@ const htmlMain = `
       <table cellspacing="0" cellpadding="0" class="ae-table ae-stripe" id="ae-table-rpc">
         <colgroup>
           <col id="ae-rpc-label-col">
+          <col id="ae-rpc-count-col">
+          <col id="ae-rpc-timing-col">
           <col id="ae-rpc-stats-col">
         </colgroup>
         <thead>
           <tr>
             <th>RPC</th>
             <th>Count</th>
+            <th>Timing</th>
             <th>Cost</th>
             <th>Cost&nbsp;%</th>
           </tr>
@@ -117,6 +122,7 @@ const htmlMain = `
               {{$item.Name}}
             </td>
             <td>{{$item.Count}}</td>
+            <td>{{.Timing}}</td>
             <td title="">{{$item.Cost}}</td>
             <td>{{/*$item.CostPct*/}}</td>
           </tr>
@@ -126,6 +132,7 @@ const htmlMain = `
           <tr>
             <td class="rpc-req">{{$subitem.Name}}</td>
             <td>{{$subitem.Count}}</td>
+            <td></td>
             <td title="">{{$subitem.Cost}}</td>
             <td>{{/*$subitem.CostPct*/}}</td>
           </tr>
@@ -149,6 +156,7 @@ const htmlMain = `
         <colgroup>
           <col id="ae-path-label-col">
           <col id="ae-path-rpcs-col">
+          <col id="ae-path-timing-col">
           <col id="ae-path-reqs-col">
           <col id="ae-path-stats-col">
         </colgroup>
@@ -156,6 +164,7 @@ const htmlMain = `
           <tr>
             <th>Path</th>
             <th>#RPCs</th>
+            <th>Timing</th>
             <th>Cost</th>
             <th>Cost%</th>
             <th>#Requests</th>
@@ -171,6 +180,7 @@ const htmlMain = `
           <td>
             {{$item.Count}}
           </td>
+          <td>{{$item.Timing}}</td>
           <td title="">{{$item.Cost}}</td>
           <td>{{/*$item.CostPct*/}}</td>
           <td>{{$item.Requests}}</td>
@@ -189,6 +199,7 @@ const htmlMain = `
             <tr>
               <td class="rpc-req">{{$subitem.Name}}</td>
               <td>{{$subitem.Count}}</td>
+              <td>{{$subitem.Timing}}</td>
               <td title="">{{$subitem.Cost}}</td>
               <td>{{/*$subitem.CostPct*/}}</td>
               <td></td>

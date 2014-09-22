@@ -215,6 +215,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Sort(reverse{allStatsByCount})
 
+	addTimingPercentiles(pathStatsByCount, allStatsByCount, requestById)
+
 	v := struct {
 		Env                 map[string]string
 		Requests            map[int]*StatByName
@@ -232,6 +234,64 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	_ = templates.ExecuteTemplate(w, "main", v)
 }
+
+func addTimingPercentiles(pathStatsByCount, allStatsByCount []*StatByName, requestByID map[int]*RequestStats) {
+	var dt []time.Duration
+	byRPC := make(map[string][]time.Duration)
+	for _, pathStat := range pathStatsByCount {
+		dt = dt[:0]
+		localByRPC := make(map[string][]time.Duration)
+		for _, id := range pathStat.RecentReqs {
+			req := requestByID[id]
+			dt = append(dt, req.Duration)
+			for _, rpcStat := range req.RPCStats {
+				name := rpcStat.Name()
+				byRPC[name] = append(byRPC[name], rpcStat.Duration)
+				localByRPC[name] = append(localByRPC[name], rpcStat.Duration)
+			}
+		}
+		pathStat.Timing = makePercentile(dt)
+		for _, stat := range pathStat.SubStats {
+			stat.Timing = makePercentile(localByRPC[stat.Name])
+		}
+	}
+	for _, stat := range allStatsByCount {
+		stat.Timing = makePercentile(byRPC[stat.Name])
+	}
+}
+
+func (t TimingPercentile) String() string {
+	return fmt.Sprintf("50%%:%.2fms 85%%:%.2fms 88%%:%.2fms 92%%:%.2fms 95%%:%.2fms 98%%:%.2fms",
+		t.P50.Seconds()*1e3,
+		t.P85.Seconds()*1e3,
+		t.P88.Seconds()*1e3,
+		t.P92.Seconds()*1e3,
+		t.P95.Seconds()*1e3,
+		t.P98.Seconds()*1e3,
+	)
+}
+
+func makePercentile(dt []time.Duration) TimingPercentile {
+	if len(dt) == 0 {
+		return TimingPercentile{}
+	}
+	sort.Sort(durations(dt))
+	n := len(dt)
+	return TimingPercentile{
+		P50: dt[n*50/100],
+		P85: dt[n*85/100],
+		P88: dt[n*88/100],
+		P92: dt[n*92/100],
+		P95: dt[n*95/100],
+		P98: dt[n*98/100],
+	}
+}
+
+type durations []time.Duration
+
+func (x durations) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+func (x durations) Less(i, j int) bool { return x[i] < x[j] }
+func (x durations) Len() int           { return len(x) }
 
 func Details(w http.ResponseWriter, r *http.Request) {
 	i, _ := strconv.Atoi(r.FormValue("time"))
